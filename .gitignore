@@ -44,6 +44,12 @@ devtools.zip
 !data/unshared/raw/README.md
 !data/unshared/derived/README.md
 
+!data-unshared/raw/nirs/README.md
+!data-unshared/derived/nirs/README.md
+!data-unshared/derived/homer/README.md
+!data-unshared/derived/model/README.md
+!data-unshared/derived/model/glm/README.md
+
 # ---- Caches -----------------------------------------------
 # Exclude caches in case they contain PHI
 cache/
