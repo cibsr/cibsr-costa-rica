@@ -42,6 +42,28 @@ class(model_file)
 #######################
 # element_names <- attr(ls,"dimnames")[[1]]
 
+get_input <- function(model_file){
+  input <- model_file$gngHome
+  ls <- list()
+  for( i in seq_along(input) ){ 
+    element_names <- attr(input,"dimnames")[[1]] 
+    ls[[element_names[i] ]] <- input[[i]] 
+  } 
+  last <- max(length(ls))
+  last_name <- names(ls[last])
+  ls_last <- ls[[last_name]]
+  
+  ls_temp <- list()
+  for( i in seq_along(ls_last) ){
+    last_element_names <- attr(ls_last,"dimnames")[[1]]
+    ls_temp[[ last_element_names[i] ]] <- ls_last[[i]] %>% t() %>% as.numeric()
+  }
+  d <- dplyr::bind_cols(ls_temp)
+  ls[[last_name]] <- d
+  return(ls)
+}
+
+ls <- get_input(model_file)
 
 
 
