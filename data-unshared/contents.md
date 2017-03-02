@@ -6,12 +6,12 @@ Since files in this directory are not staged/committed, it's tough to communicat
 ### `./data-unshared/raw/nirs/`
 Contais NIRS signal source files as they emerge from the capturing device.
 * folders of the form `crNirs_gng_056_63_m_f1` where
-  - `crNirs` -
-  - `gng` - experiment mnemonics
+  - `crNirs` - Costa Rica
+  - `gng` - experiment mnemonics for go-nogo task
   - `056` - person identifier
-  - `63` - ??
+  - `63` - age of the person
   - `m` - gender indicator (m - male, f - female)
-  - `f1` - ??
+  - `f1` - farm one
 * each folder contains a collection of files produced by the capturing device. 
 * the files with extensions `.wl1` and `.wl2` contain the signal data
 
