@@ -21,6 +21,7 @@ path_glm_gng         <- paste0(path_folder_glm,"/gng")
 path_glm_stern       <- paste0(path_folder_glm,"/stern")
 path_glm_wcst        <- paste0(path_folder_glm,"/wcst")
 
+path_folder_homer    <- "./data-unshared/derived/homer"
 # path_folder_stern    <- "./data-unshared/raw/stern"
 # path_folder_wcst    <- "./data-unshared/raw/wcst"
 # 
@@ -116,6 +117,34 @@ assemble_index <- function(ls_persons, index_name){
 # ds_channel <- ls_glm_gng %>% assemble_index("channel")
 # ds_source <- ls_glm_gng %>% assemble_index("source")
 
+# function to import a bihavioral data file
+get_bx_file <- function(path_file){
+  model_file <- R.matlab::readMat(file_path)
+  input <- model_file[[1]]
+  ls_temp <- list()
+  (element_names <- rownames(input))
+  for(i in seq_along(input) ){
+    # input[i] %>% unlist() %>% as.vector()  %>% print()
+    ls_temp[[ element_names[i] ]] <- input[i] %>% unlist() %>% as.vector()
+  }
+  # find what elements contain a single value
+  test <- lapply(ls_temp, function(x) ifelse(length(x)==1, 1, 0)) %>%unlist()
+  element_single <- names(which(test==1))
+  element_multi  <- setdiff(element_names, element_single)
+  d <- ls_temp[element_multi] %>% 
+    dplyr::bind_cols() %>% as.data.frame()
+  for(i in seq_along(element_single)){
+    # i <- 1
+    d[,element_single[i] ] <- ls_temp[ element_single[i] ]
+  }
+  d <- d %>% dplyr::select_(.dots = element_names)
+  return(d) 
+}
+# ds <- get_bx_file("./data-unshared/raw/stern/sternberg_cr_95crNirs.mat")
+# ds <- get_bx_file("./data-unshared/raw/wcst/cardSort_cr_95crNirs.mat")
+# ds <- get_bx_file("./data-unshared/raw/gng/goNoGo_cr_95crNirs.mat")
+
+
 # ---- assemble-data -----------------------
 # gather the list of person files 
 ls_glm_gng <- list()
@@ -127,12 +156,109 @@ for( i in seq_along(path_files_gng) ){
 names(ls_glm_gng)
 lapply(ls_glm_gng[1], names)
 
-
 ds_channel <- ls_glm_gng %>% assemble_index("channel")
 ds_source <- ls_glm_gng %>% assemble_index("source")
+# TODO. Pre-req : names of the columsn
+# ds_beta <- ls_glm_gng %>% assemble_index("beta")
+# ds_tval <- ls_glm_gng %>% assemble_index("tval")
+# ds_pval <- ls_glm_gng %>% assemble_index("pval")
+
 
 
 # ---- define-utility-functions ---------------
 
+regex_pattern <- "(\\w+)_(\\w+)_(\\w+)_(\\d+)_(\\d+)_(\\w{1})_f(\\w+)"
+ds <- ds_source %>% 
+  dplyr::mutate(
+    model     = gsub(regex_pattern,"\\2", person),
+    task      = gsub(regex_pattern,"\\3", person),
+    person_id = gsub(regex_pattern,"\\4", person),
+    age       = gsub(regex_pattern,"\\5", person),
+    sex       = gsub(regex_pattern,"\\6", person),
+    farm_id   = gsub(regex_pattern,"\\7", person)
+    
+  )
+head(ds)
+
+lapply(ds, table)
+
+
+# input a homer file (emerging from homer)
+(file_path <- paste0(list.files(path_folder_homer, full.names = T)[1]))
+model_file <- R.matlab::readMat(file_path)
+
+# input raw behavioral file
+path_folder_raw_stern <- "./data-unshared/raw/stern"
+(file_path <- paste0(list.files(path_folder_raw_stern, full.names = T)[1]))
+model_file <- R.matlab::readMat(file_path)
+input <- model_file[[1]]
+
+
+
+names(ds)
+
+target_elements <- c("rest","strings","targets","responses", "responseTimes","correct","compatible")
+d <- ls_temp[target_elements] %>% 
+  dplyr::bind_cols() %>% 
+  dplyr::mutate(
+    subject_id = ls_temp[["subjectID"]],
+    initRest      = ls_temp[["initRest"]],
+    maint      = ls_temp[["encoding"]],
+    maint      = ls_temp[["maint"]],
+    maint      = ls_temp[["retrieval"]],
+    maint      = ls_temp[["finalRest"]],
+    
+  )
+
+ls_temp
+d <- ls_temp %>% 
+d <- dplyr::bind_cols(ls_temp)
+
+str(input)
+class(input)
+attr(input,"dim")
+attr(input,"dimnames")
+
+input[8]
+input[8] %>% unlist() %>% as.vector()
+input[9] %>% unlist() %>% as.vector()
+input[11]
+
+class(model_file)
+d <- model_file$dc
+class(d)
+str(d)
+
+colnames(d)
+
+View(d)
+input <- model_file[[1]]
+(element_names <- rownames(input) ) 
+(last <- max(length(input))) # last component, should contain conditions
+
+(condition_names <- rownames(input[[last]]))
+(last_name <- element_names[last])
+(ar_source <- input[[last]] )
+
 # ---- save-to-disk ----------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
