@@ -13,20 +13,27 @@ cat("\f") # clear console
 # Attach these packages so their functions don't need to be qualified: http://r-pkgs.had.co.nz/namespace.html#search-path
 library(tidyverse) #Pipes
 library(R.matlab)
-library()
+
 
 # ---- declare-globals ---------------------------------------------------------
-path_folder_glm  <- "./data-unshared/derived/model/glm"
-path_gng         <- paste0(path_folder_glm,"/gng")
-path_stern       <- paste0(path_folder_glm,"/stern")
-path_wcst        <- paste0(path_folder_glm,"/wcst")
+path_folder_glm      <- "./data-unshared/derived/model/glm"
+path_glm_gng         <- paste0(path_folder_glm,"/gng")
+path_glm_stern       <- paste0(path_folder_glm,"/stern")
+path_glm_wcst        <- paste0(path_folder_glm,"/wcst")
 
-path_files_gng   <- list.files(path_gng, pattern = ".mat",full.names = T)
-path_files_stern <- list.files(path_stern, pattern = ".mat",full.names = T)
-path_files_wcst  <- list.files(path_wcst, pattern = ".mat",full.names = T)
+# path_folder_stern    <- "./data-unshared/raw/stern"
+# path_folder_wcst    <- "./data-unshared/raw/wcst"
+# 
+# path_folder_homer    <- "./data-unshared/derived/homer"
+
+path_files_gng   <- list.files(path_glm_gng, pattern = ".mat",full.names = T)
+path_files_stern <- list.files(path_glm_stern, pattern = ".mat",full.names = T)
+path_files_wcst  <- list.files(path_glm_wcst, pattern = ".mat",full.names = T)
 
 # ---- load-data ---------------------------------------------------------------
-model_file <- R.matlab::readMat(path_files_gng[1])
+# model_file <- R.matlab::readMat(path_files_gng[1])
+model_file <- R.matlab::readMat(path_files_stern[1])
+# model_file <- R.matlab::readMat(path_files_wcst[1])
 # input <- R.matlab::readMat(path_files_gng[1])
 class(model_file)
 # input <- input$gngHome
@@ -42,29 +49,44 @@ class(model_file)
 #######################
 # element_names <- attr(ls,"dimnames")[[1]]
 
-get_input <- function(model_file){
-  input <- model_file$gngHome
-  ls <- list()
-  for( i in seq_along(input) ){ 
-    element_names <- attr(input,"dimnames")[[1]] 
-    ls[[element_names[i] ]] <- input[[i]] 
-  } 
-  last <- max(length(ls))
-  last_name <- names(ls[last])
-  ls_last <- ls[[last_name]]
+get_glm_file <- function(model_file){
+  input <- model_file[[1]]
+  (element_names <- rownames(input) ) 
+  (last <- max(length(input))) # last component, should contain conditions
   
-  ls_temp <- list()
-  for( i in seq_along(ls_last) ){
-    last_element_names <- attr(ls_last,"dimnames")[[1]]
-    ls_temp[[ last_element_names[i] ]] <- ls_last[[i]] %>% t() %>% as.numeric()
+  (condition_names <- rownames(input[[last]]))
+  (last_name <- element_names[last])
+  (ar_source <- input[[last]] )
+  
+  # transform the raw .mat into a list object
+  ls_input <- list()
+  for( i in seq_along(input) ){ 
+    ls_input[[ element_names[i] ]] <- input[[i]] 
+  } 
+  # extract the array with localized sources data
+  ls_sources <- list()
+  for( i in seq_along(condition_names) ){
+    ls_sources[[ condition_names[i] ]] <- ar_source[[i]] %>% t() %>% as.numeric()
   }
-  d <- dplyr::bind_cols(ls_temp)
-  ls[[last_name]] <- d
-  return(ls)
+  (ds_sources <- dplyr::bind_cols(ls_sources))
+  # combine data from channels
+  ls_channels <- list()
+  for(i in names(ds_sources) ){
+    ls_channels[[i]] <- ls_input[[i]] %>% as.numeric()
+  }
+  (ds_channels <- ls_channels %>% dplyr::bind_cols() )
+  # assemble the output objectd
+  ls_output <- list()
+  ls_output[["channels"]] <- ds_channels
+  ls_output[["sources"]]  <- ds_sources
+  ls_output[["beta"]]  <- ls_input[["beta"]]
+  ls_output[["tval"]]  <- ls_input[["T"]]
+  ls_output[["pval"]]  <- ls_input[["P"]]
+  return(ls_output)
+  
 }
 
-ls <- get_input(model_file)
-
+ls <- get_glm_file(model_file)
 
 
 
