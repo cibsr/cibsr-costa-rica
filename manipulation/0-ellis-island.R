@@ -32,7 +32,7 @@ path_files_wcst  <- list.files(path_glm_wcst, pattern = ".mat",full.names = T)
 
 # ---- load-data ---------------------------------------------------------------
 # model_file <- R.matlab::readMat(path_files_gng[1])
-model_file <- R.matlab::readMat(path_files_stern[1])
+# model_file <- R.matlab::readMat(path_files_stern[1])
 # model_file <- R.matlab::readMat(path_files_wcst[1])
 # input <- R.matlab::readMat(path_files_gng[1])
 class(model_file)
@@ -46,10 +46,10 @@ class(model_file)
 # attr(input,"dimnames")
 # attr(input,"dimnames")[[1]]
 
-#######################
-# element_names <- attr(ls,"dimnames")[[1]]
-
-get_glm_file <- function(model_file){
+# ---- develop-functions ------------------------
+# function to extract individual glm file
+get_glm_file <- function(file_path){
+  model_file <- R.matlab::readMat(file_path)
   input <- model_file[[1]]
   (element_names <- rownames(input) ) 
   (last <- max(length(input))) # last component, should contain conditions
@@ -77,17 +77,57 @@ get_glm_file <- function(model_file){
   (ds_channels <- ls_channels %>% dplyr::bind_cols() )
   # assemble the output objectd
   ls_output <- list()
-  ls_output[["channels"]] <- ds_channels
-  ls_output[["sources"]]  <- ds_sources
+  ls_output[["channel"]] <- ds_channels
+  ls_output[["source"]]  <- ds_sources
   ls_output[["beta"]]  <- ls_input[["beta"]]
   ls_output[["tval"]]  <- ls_input[["T"]]
   ls_output[["pval"]]  <- ls_input[["P"]]
   return(ls_output)
   
 }
+# ls <- get_glm_file("./data-unshared/derived/model/glm/gng/crNirs_glm_gng_056_63_m_f1.mat")
 
-ls <- get_glm_file(model_file)
+# function to assemble ds of a given index from the list of individual glm files
+# relies on get_glm_file() to extract individual files
+# must provide a list object with files paths to individual glm files
+assemble_index <- function(ls_persons, index_name){
+  ls_temp <- list()
+  for( i in names(ls_persons) ){
+    # i <- "crNirs_glm_gng_056_63_m_f1"
+    # index_name <- "source"
+    d1 <- ls_persons[[i]][[index_name]]
+    rows_to_gather <- names(d1)
+    d2 <- d1 %>%  
+      tibble::rownames_to_column() %>% 
+      tidyr::gather_(key = "condition", value="value",rows_to_gather) %>% 
+      dplyr::mutate(index = index_name) 
+    if(index_name=="source"){
+      d3 <- d2 %>% dplyr::rename(source = rowname)
+    }else{
+      d3 <- d2 %>% dplyr::rename(channel = rowname)
+    }
+    ls_temp[[i]] <- d3
+  }
+  d <- dplyr::bind_rows(ls_temp,.id="person")
+  return(d)
+}
+# ds_channel <- ls_glm_gng %>% assemble_index("channel")
+# ds_source <- ls_glm_gng %>% assemble_index("source")
 
+# ---- assemble-data -----------------------
+# gather the list of person files 
+ls_glm_gng <- list()
+for( i in seq_along(path_files_gng) ){
+  (path_name <- path_files_gng[i])
+  (file_name <- sub(".mat","",basename(path_name)))
+  ls_glm_gng[[file_name]] <- get_glm_file(path_name)
+}
+names(ls_glm_gng)
+lapply(ls_glm_gng[1], names)
+
+
+ds_channel <- ls_glm_gng %>% assemble_index("channel")
+ds_source <- ls_glm_gng %>% assemble_index("source")
 
 
 # ---- define-utility-functions ---------------
