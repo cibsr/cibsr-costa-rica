@@ -190,13 +190,13 @@ assemble_bx <- function(path_folder){
 
 # ---- assemble-glm-data -----------------------
 # gather the list of person files 
-ds_nirs_channel <-  assemble_glm("./data-unshared/derived/glm/gng","channel")
-ds_nirs_source  <-  assemble_glm("./data-unshared/derived/glm/gng","source")
+ds_nirs_channel <-  assemble_glm("./data-unshared/derived/model/glm/gng/","channel")
+ds_nirs_source  <-  assemble_glm("./data-unshared/derived/model/glm/gng","source")
 
 # ---- tweak-glm-data ---------------
 
 regex_pattern <- "(\\w+)_(\\w+)_(\\w+)_(\\d+)_(\\d+)_(\\w{1})_f(\\w+)"
-ds <- ds_source %>% 
+ds_nirs_source <- ds_nirs_source %>% 
   dplyr::mutate(
     model     = gsub(regex_pattern,"\\2", person),
     task      = gsub(regex_pattern,"\\3", person),
@@ -205,8 +205,17 @@ ds <- ds_source %>%
     sex       = gsub(regex_pattern,"\\6", person),
     farm_id   = gsub(regex_pattern,"\\7", person)
   )
-head(ds)
-
+head(ds_nirs_source)
+ds_nirs_channel <- ds_nirs_channel %>% 
+  dplyr::mutate(
+    model     = gsub(regex_pattern,"\\2", person),
+    task      = gsub(regex_pattern,"\\3", person),
+    person_id = gsub(regex_pattern,"\\4", person),
+    age       = gsub(regex_pattern,"\\5", person),
+    sex       = gsub(regex_pattern,"\\6", person),
+    farm_id   = gsub(regex_pattern,"\\7", person)
+  )
+head(ds_nirs_channel)
 lapply(ds, table)
 
 # ---- assemble-bx-data -----------------------------
@@ -223,7 +232,7 @@ dto <- list(
   "dx"   = list()
 )
 dto[["nirs"]][["source"]] <- ds_nirs_source
-dto[["nirs"]][["source"]] <- ds_nirs_channel
+dto[["nirs"]][["channel"]] <- ds_nirs_channel
 dto[["dx"]][["gng"]]      <- ds_bx_gng
 dto[["dx"]][["stern"]]    <- ds_bx_stern
   
