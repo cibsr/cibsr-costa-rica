@@ -93,7 +93,7 @@ get_glm_file <- function(file_path){
 # function to assemble ds of a given index from the list of individual glm files
 # relies on get_glm_file() to extract individual files
 # must provide a list object with files paths to individual glm files
-assemble_index <- function(ls_persons, index_name){
+assemble_glm_index <- function(ls_persons, index_name){
   ls_temp <- list()
   for( i in names(ls_persons) ){
     # i <- "crNirs_glm_gng_056_63_m_f1"
@@ -117,9 +117,35 @@ assemble_index <- function(ls_persons, index_name){
 # ds_channel <- ls_glm_gng %>% assemble_index("channel")
 # ds_source <- ls_glm_gng %>% assemble_index("source")
 
+# gathers glm data of a given index from all individuals in a folder
+# relies on assemble_glm_index() which
+# relies on get_glm_file()
+assemble_glm <- function(path_folder, index_name){
+  # path_folder <- "./data-unshared/derived/model/glm/gng/"
+  # index_name  <- "channel"
+  path_files <- list.files(path_folder, pattern = ".mat",full.names = T)
+  
+  ls_index <- list()
+  for( i in seq_along(path_files) ){
+    (path_name <- path_files[i])
+    (file_name <- sub(".mat","",basename(path_name)))
+    ls_index[[file_name]] <- get_glm_file(path_name)
+  }
+  d <- ls_index %>% assemble_glm_index(index_name)
+}
+# ds_channel <-  assemble_glm("./data-unshared/derived/glm/gng","channel")
+# ds_source  <-  assemble_glm("./data-unshared/derived/glm/gng","source")
+# # TODO. Pre-req : names of the columsn
+# ds_beta <-  assemble_glm("./data-unshared/derived/glm/gng","beta")
+# ds_tval <-  assemble_glm("./data-unshared/derived/glm/gng","tval")
+# ds_pval <-  assemble_glm("./data-unshared/derived/glm/gng","pval")
+
 # function to import a bihavioral data file
 get_bx_file <- function(path_file){
-  model_file <- R.matlab::readMat(file_path)
+  # path_file <-  "./data-unshared/raw/gng/goNoGo_cr_101crNirs.mat"  
+  # path_file <-  "./data-unshared/raw/stern/sternberg_cr_101crNirs.mat"
+  # path_file <-  "./data-unshared/raw/wcst/cardSort_cr_101_crNirs.mat" # differnt structure
+  model_file <- R.matlab::readMat(path_file)
   input <- model_file[[1]]
   ls_temp <- list()
   (element_names <- rownames(input))
@@ -137,35 +163,37 @@ get_bx_file <- function(path_file){
     # i <- 1
     d[,element_single[i] ] <- ls_temp[ element_single[i] ]
   }
-  d <- d %>% dplyr::select_(.dots = element_names)
+  d <- d %>% dplyr::select_(.dots = element_names) %>% 
+    tibble::rownames_to_column()
   return(d) 
 }
 # ds <- get_bx_file("./data-unshared/raw/stern/sternberg_cr_95crNirs.mat")
 # ds <- get_bx_file("./data-unshared/raw/wcst/cardSort_cr_95crNirs.mat")
 # ds <- get_bx_file("./data-unshared/raw/gng/goNoGo_cr_95crNirs.mat")
 
-
-# ---- assemble-data -----------------------
-# gather the list of person files 
-ls_glm_gng <- list()
-for( i in seq_along(path_files_gng) ){
-  (path_name <- path_files_gng[i])
-  (file_name <- sub(".mat","",basename(path_name)))
-  ls_glm_gng[[file_name]] <- get_glm_file(path_name)
+# assembles  behavioral data from a given folder
+assemble_bx <- function(path_folder){
+  # path_folder <- "./data-unshared/raw/gng"
+  path_files <- list.files(path_folder, pattern = ".mat",full.names =T )
+  ls_temp <- list()
+  for( i in seq_along( path_files ) ){
+    file_name <- sub(".mat", "", basename(path_files[i]))
+    ls_temp[[ file_name ]] <- d <- get_bx_file( path_file = path_files[i] )
+  } 
+  d <- ls_temp %>% dplyr::bind_rows(.id = "person_id")
+  return(d)
 }
-names(ls_glm_gng)
-lapply(ls_glm_gng[1], names)
+# ds_bx_gng <- assemble_bx("./data-unshared/raw/gng")
+# ds_bx_stern <- assemble_bx("./data-unshared/raw/stern")
+# TODO. wcst is of a differnet structure
+# ds_bx_wcst <- assemble_bx("./data-unshared/raw/wcst")
 
-ds_channel <- ls_glm_gng %>% assemble_index("channel")
-ds_source <- ls_glm_gng %>% assemble_index("source")
-# TODO. Pre-req : names of the columsn
-# ds_beta <- ls_glm_gng %>% assemble_index("beta")
-# ds_tval <- ls_glm_gng %>% assemble_index("tval")
-# ds_pval <- ls_glm_gng %>% assemble_index("pval")
+# ---- assemble-glm-data -----------------------
+# gather the list of person files 
+ds_nirs_channel <-  assemble_glm("./data-unshared/derived/glm/gng","channel")
+ds_nirs_source  <-  assemble_glm("./data-unshared/derived/glm/gng","source")
 
-
-
-# ---- define-utility-functions ---------------
+# ---- tweak-glm-data ---------------
 
 regex_pattern <- "(\\w+)_(\\w+)_(\\w+)_(\\d+)_(\\d+)_(\\w{1})_f(\\w+)"
 ds <- ds_source %>% 
@@ -176,13 +204,33 @@ ds <- ds_source %>%
     age       = gsub(regex_pattern,"\\5", person),
     sex       = gsub(regex_pattern,"\\6", person),
     farm_id   = gsub(regex_pattern,"\\7", person)
-    
   )
 head(ds)
 
 lapply(ds, table)
 
+# ---- assemble-bx-data -----------------------------
 
+ds_bx_gng <- assemble_bx("./data-unshared/raw/gng")
+ds_bx_stern <- assemble_bx("./data-unshared/raw/stern")
+# ds_bx_wcst <- assemble_bx("./data-unshared/raw/wcst")
+
+# ---- tweak-bx-data ------------------------------
+
+# ---- assemble-dto --------------------
+dto <- list(
+  "nirs" = list(),
+  "dx"   = list()
+)
+dto[["nirs"]][["source"]] <- ds_nirs_source
+dto[["nirs"]][["source"]] <- ds_nirs_channel
+dto[["dx"]][["gng"]]      <- ds_bx_gng
+dto[["dx"]][["stern"]]    <- ds_bx_stern
+  
+# ---- save-to-disk ------------------
+dto %>% saveRDS("./data-unshared/derived/dto.rds")
+
+# ----  -----------------------------
 # input a homer file (emerging from homer)
 (file_path <- paste0(list.files(path_folder_homer, full.names = T)[1]))
 model_file <- R.matlab::readMat(file_path)
@@ -206,8 +254,7 @@ d <- ls_temp[target_elements] %>%
     maint      = ls_temp[["encoding"]],
     maint      = ls_temp[["maint"]],
     maint      = ls_temp[["retrieval"]],
-    maint      = ls_temp[["finalRest"]],
-    
+    maint      = ls_temp[["finalRest"]]
   )
 
 ls_temp
