@@ -85,7 +85,9 @@ get_glm_file <- function(file_path){
   return(ls_output)
   
 }
-# ls <- get_glm_file("./data-unshared/derived/model/glm/gng/crNirs_glm_gng_056_63_m_f1.mat")
+# ls <- get_glm_file("./data-unshared/derived/model/glm/gng/crNirs_glm_gng_062_51_m_f2.mat")
+# ls <- get_glm_file("./data-unshared/derived/model/glm/stern/crNirs_glm_stern_062_51_m_f2.mat")
+# ls <- get_glm_file("./data-unshared/derived/model/glm/wcst/crNirs_glm_wcst_062_51_m_f2.mat")
 
 # function to assemble ds of a given index from the list of individual glm files
 # relies on get_glm_file() to extract individual files
