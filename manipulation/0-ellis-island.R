@@ -96,32 +96,41 @@ get_glm_file <- function(file_path){
 assemble_glm_index <- function(ls_persons, index_name){
   ls_temp <- list()
   for( i in names(ls_persons) ){
+    # ls_persons <- ls_index
     # i <- "crNirs_glm_gng_056_63_m_f1"
+    # i <- "crNirs_glm_stern_062_51_m_f2"
+    # index_name <- "beta"
     # index_name <- "source"
+    rows_to_gather <- names(ls_persons[[1]]$source) # source give the authority
     d1 <- ls_persons[[i]][[index_name]]
+    if(index_name %in% c("beta","tval","pval")){
+      d1 <- d1 %>% as_tibble()
+      names(d1) <- rows_to_gather[1:ncol(d1)] # the first columns from source
+    }
     rows_to_gather <- names(d1)
     d2 <- d1 %>%  
       tibble::rownames_to_column() %>% 
       tidyr::gather_(key = "condition", value="value",rows_to_gather) %>% 
       dplyr::mutate(index = index_name) 
-    if(index_name=="source"){
-      d3 <- d2 %>% dplyr::rename(source = rowname)
-    }else{
-      d3 <- d2 %>% dplyr::rename(channel = rowname)
-    }
-    ls_temp[[i]] <- d3
+    # if(index_name=="source"){
+    #   d3 <- d2 %>% dplyr::rename(source = rowname)
+    # }else{
+    #   d3 <- d2 %>% dplyr::rename(channel = rowname)
+    # }
+    ls_temp[[i]] <- d2
   }
   d <- dplyr::bind_rows(ls_temp,.id="person")
   return(d)
 }
-# ds_channel <- ls_glm_gng %>% assemble_index("channel")
-# ds_source <- ls_glm_gng %>% assemble_index("source")
+# ds_channel <- ls_index %>% assemble_index("channel")
+# ds_source <- ls_index %>% assemble_index("source")
 
 # gathers glm data of a given index from all individuals in a folder
 # relies on assemble_glm_index() which
 # relies on get_glm_file()
 assemble_glm <- function(path_folder, index_name){
   # path_folder <- "./data-unshared/derived/model/glm/gng/"
+  # path_folder <- "./data-unshared/derived/model/glm/stern/"
   # index_name  <- "channel"
   path_files <- list.files(path_folder, pattern = ".mat",full.names = T)
   
@@ -190,8 +199,11 @@ assemble_bx <- function(path_folder){
 
 # ---- assemble-glm-data -----------------------
 # gather the list of person files 
-ds_nirs_channel <-  assemble_glm("./data-unshared/derived/model/glm/gng/","channel")
-ds_nirs_source  <-  assemble_glm("./data-unshared/derived/model/glm/gng","source")
+ds_nirs_channel <-  assemble_glm("./data-unshared/derived/model/glm/stern","channel")
+ds_nirs_source  <-  assemble_glm("./data-unshared/derived/model/glm/stern","source")
+ds_nirs_beta    <-  assemble_glm("./data-unshared/derived/model/glm/stern","beta")
+ds_nirs_tval    <-  assemble_glm("./data-unshared/derived/model/glm/stern","tval")
+ds_nirs_pval    <-  assemble_glm("./data-unshared/derived/model/glm/stern","pval")
 
 # ---- tweak-glm-data ---------------
 

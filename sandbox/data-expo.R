@@ -6,11 +6,12 @@ cat("\f") # clear console
 # ---- load-packages -----------------------------------------------------------
 # Attach these packages so their functions don't need to be qualified: http://r-pkgs.had.co.nz/namespace.html#search-path
 library(magrittr) # enables piping : %>% 
+library(ggplot2)
 
 # ---- load-sources ------------------------------------------------------------
 # Call `base::source()` on any repo file that defines functions needed below.  Ideally, no real operations are performed.
 source("./scripts/common-functions.R") # used in multiple reports
-source("./scripts/graph-presets.R") # fonts, colors, themes 
+source("./scripts/graphs/graph-presets.R") # fonts, colors, themes 
 source("./scripts/general-graphs.R") 
 # Verify these packages are available on the machine, but their functions need to be qualified: http://r-pkgs.had.co.nz/namespace.html#search-path
 requireNamespace("ggplot2") # graphing
@@ -27,29 +28,66 @@ requireNamespace("testit")# For asserting conditions meet expected patterns.
 dto <- readRDS("./data-unshared/derived/dto.rds")
 # each element this list is another list:
 names(dto)
-# 3rd element - data set with unit data
-dplyr::tbl_df(dto[["unitData"]]) 
-# 4th element - dataset with augmented names and labels of the unit data
-dplyr::tbl_df(dto[["metaData"]])
+lapply(dto, names)
 
+# ---- utility-functions -------------------------------------------------------
+showfreq <- function(d,varname){
+  d %>% 
+    dplyr::group_by_(varname) %>% 
+    dplyr::summarize(n=n())
+}
 # ---- inspect-data -------------------------------------------------------------
-
-
+ds <- dto$nirs$source
+ds
 # ---- tweak-data --------------------------------------------------------------
+ds <- ds %>% 
+    dplyr::mutate(
+      # channel = as.integer(channel),
+      source  = as.integer(source),
+      condition = factor(condition),
+      # person_id = as.integer(person_id),
+      # person_id = as.integer(person_id),
+      age       = as.integer(age),
+      male      = as.logical( ifelse(sex=="m",1,0)),
+      farm_id   = as.integer(farm_id)
+      
+    )
+ds %>% dplyr::glimpse()
+ds %>% showfreq("male")
 
 # ---- basic-table --------------------------------------------------------------
 
+names(ds)
+ds %>% showfreq("person_id")
+ds %>% showfreq("source")
+ds %>% showfreq("condition")
+ds %>% showfreq("sex")
+ds %>% showfreq("farm_id")
+
+summary(ds$age)
+
+
 # ---- basic-graph --------------------------------------------------------------
-# this is how we can interact with the `dto` to call and graph data and metadata
-dto[["metaData"]] %>% 
-  dplyr::filter(type=="demographic") %>% 
-  dplyr::select(name,name_new,label)
 
-dto[["unitData"]]%>%
-  histogram_continuous("age_death", bin_width=1)
+d <- ds
+g <- d %>% 
+  ggplot(aes(x=person_id, y=value))+
+  geom_point()+
+  facet_grid(source ~ condition)+
+  main_theme+
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+g
 
-dto[["unitData"]]%>%
-  histogram_discrete("msex")
+####
+
+
+
+
 
 # ---- publish ---------------------------------------
 path_report_1 <- "./reports/*/report_1.Rmd"
