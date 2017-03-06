@@ -243,8 +243,8 @@ dto <- list(
   "nirs" = list(),
   "dx"   = list()
 )
-dto[["nirs"]][["source"]] <- ds_nirs_source
-dto[["nirs"]][["channel"]] <- ds_nirs_channel
+# dto[["nirs"]][["source"]] <- ds_nirs_source
+# dto[["nirs"]][["channel"]] <- ds_nirs_channel
 dto[["dx"]][["gng"]]      <- ds_bx_gng
 dto[["dx"]][["stern"]]    <- ds_bx_stern
   

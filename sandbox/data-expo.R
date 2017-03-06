@@ -37,9 +37,43 @@ showfreq <- function(d,varname){
     dplyr::summarize(n=n())
 }
 # ---- inspect-data -------------------------------------------------------------
+
+
+# ---- tweak-data --------------------------------------------------------------
+# ds <- dto$dx$gng %>% tibble::as_tibble()
+ds <- dto$dx$stern %>% tibble::as_tibble()
+ds %>% dplyr::glimpse()
+dto %>% showfreq("surveyID")
+
+regex_rule <- "^(\\w+)_(\\w+)_(\\d+)(\\w+)$"
+d <- ds %>% 
+  dplyr::mutate(
+    person_id = gsub(regex_rule,"\\3", person_id),
+    correct   = as.logical(correct)
+  ) %>% 
+  dplyr::rename(
+    timepoint = rowname
+  )
+d
+
+g <- d %>% 
+  dplyr::filter(person_id %in% 101:105) %>%
+  ggplot(aes(x=timepoint,y=responseTimes,color=correct )) +
+  # geom_point(shape=21)+
+  geom_text(aes(label = targets), size=2)+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank()
+  )+
+  facet_wrap("person_id",scales = "free", as.table = T)+
+  # theme_minimal()
+  theme_void()
+g
+
+
+# ----- graphing-scatters-1  -----------------------------------------------------
 ds <- dto$nirs$source
 ds
-# ---- tweak-data --------------------------------------------------------------
 ds <- ds %>% 
     dplyr::mutate(
       # channel = as.integer(channel),
