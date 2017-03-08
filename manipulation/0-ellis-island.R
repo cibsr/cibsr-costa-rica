@@ -13,6 +13,7 @@ cat("\f") # clear console
 # Attach these packages so their functions don't need to be qualified: http://r-pkgs.had.co.nz/namespace.html#search-path
 library(tidyverse) #Pipes
 library(R.matlab)
+library(tibble)
 
 
 # ---- declare-globals ---------------------------------------------------------
@@ -229,7 +230,7 @@ ds_nirs_channel <- ds_nirs_channel %>%
     farm_id   = gsub(regex_pattern,"\\7", person)
   )
 head(ds_nirs_channel)
-lapply(ds, table)
+lapply(ds_nirs_channel, table)
 
 # ---- assemble-bx-data -----------------------------
 
