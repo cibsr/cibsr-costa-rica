@@ -10,9 +10,8 @@ library(ggplot2)
 
 # ---- load-sources ------------------------------------------------------------
 # Call `base::source()` on any repo file that defines functions needed below.  Ideally, no real operations are performed.
-source("./scripts/common-functions.R") # used in multiple reports
+source("./scripts/functions-common.R") # used in multiple reports
 source("./scripts/graphs/graph-presets.R") # fonts, colors, themes 
-source("./scripts/general-graphs.R") 
 # Verify these packages are available on the machine, but their functions need to be qualified: http://r-pkgs.had.co.nz/namespace.html#search-path
 requireNamespace("ggplot2") # graphing
 # requireNamespace("readr") # data input
@@ -41,55 +40,35 @@ showfreq <- function(d,varname){
 
 # ---- tweak-data --------------------------------------------------------------
 # ds <- dto$nirs$channel
-ds <- dto$nirs$source
+# ds <- dto$nirs$source
 # ds <- dto$dx$gng %>% tibble::as_tibble()
-# ds <- dto$dx$stern %>% tibble::as_tibble()
-ds %>% dplyr::glimpse()
+ds <- dto$dx$stern %>% tibble::as_tibble()
+# ds %>% dplyr::glimpse()
 # dto %>% showfreq("surveyID")
 
 regex_rule <- "^(\\w+)_(\\w+)_(\\d+)(\\w+)$"
-d <- ds %>% 
+ds <- ds %>% 
   dplyr::mutate(
-    person_id = gsub(regex_rule,"\\3", person_id),
-    correct   = as.logical(correct)
+    person_id = gsub(regex_rule,"\\3", person_id) %>% as.integer(),
+    correct   = as.logical(correct),
+    initRest  = as.integer(initRest),
+    finalRest = as.integer(finalRest),
+    rest      = as.integer(rest),
+    responses = as.integer(responses),
+    target_x  = ifelse(targets %in% c("x","X"),TRUE,FALSE),
+    target_x_value = ifelse(target_x,"X"," ")
   ) %>% 
   dplyr::rename(
-    timepoint = rowname
-  )
-d
-
-g <- d %>% 
-  dplyr::filter(person_id %in% 101:105) %>%
-  ggplot(aes(x=timepoint,y=responseTimes,color=correct )) +
-  # geom_point(shape=21)+
-  geom_text(aes(label = targets), size=2)+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  )+
-  facet_wrap("person_id",scales = "free", as.table = T)+
-  # theme_minimal()
-  theme_void()
-g
-
-
-# ----- graphing-scatters-1  -----------------------------------------------------
-ds <- dto$nirs$source
-ds
-ds <- ds %>% 
-    dplyr::mutate(
-      # channel = as.integer(channel),
-      source  = as.integer(source),
-      condition = factor(condition),
-      # person_id = as.integer(person_id),
-      # person_id = as.integer(person_id),
-      age       = as.integer(age),
-      male      = as.logical( ifelse(sex=="m",1,0)),
-      farm_id   = as.integer(farm_id)
-      
-    )
+    timepoint = rowname,
+    response_time = responseTimes,
+    rest_initial = initRest,
+    rest_final = finalRest,
+    response = responses
+  ) %>% 
+  dplyr::select(-subjectID)
 ds %>% dplyr::glimpse()
-ds %>% showfreq("male")
+ds
+
 
 # ---- basic-table --------------------------------------------------------------
 
@@ -105,20 +84,31 @@ summary(ds$age)
 
 # ---- basic-graph --------------------------------------------------------------
 
-d <- ds
-g <- d %>% 
-  ggplot(aes(x=person_id, y=value))+
-  geom_point()+
-  facet_grid(source ~ condition)+
-  main_theme+
+# individual timeserise with X
+g <- ds %>% 
+  # dplyr::filter(person_id %in% 101:105) %>%
+  ggplot(aes(x=timepoint,y=response_time)) +
+  geom_line(aes(group=person_id),size=.5, alpha=.5) +
+  # geom_point(aes(fill=correct),shape=21, color="black", alpha=1, size=2)+
+  geom_point(aes(shape = target_x_value, fill=correct), size=3)+
+  scale_shape_manual(values = c("X"=21," "=32)) + 
+  # geom_text(aes(label = target_x_value ), size=4, nudge_y = +.5)+
+  # geom_text(aes(label = target_x_value ,y=Inf), size=4)+
+  scale_fill_manual(values = c("TRUE"="white","FALSE"="salmon"))+
+  # scale_color_manual(values = c("TRUE"="white","FALSE"="salmon"))+
+  facet_wrap("person_id",scales = "fixed", as.table = T)+
+  # theme_tufte()+
+  theme_bw() +
+  # theme_minimal() +
   theme(
-    axis.text.x = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor.x = element_blank()
-  )
-g
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  guides(shape=F)
 
+# theme_void()
+g
 ####
 
 

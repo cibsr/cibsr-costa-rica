@@ -151,11 +151,12 @@ assemble_glm <- function(path_folder, index_name){
 
 # function to import a bihavioral data file
 get_bx_file <- function(path_file){
-  # path_file <-  "./data-unshared/raw/gng/goNoGo_cr_101crNirs.mat"  
+  # path_file <-  "./data-unshared/raw/gng/goNoGo_cr_101crNirs.mat"
   # path_file <-  "./data-unshared/raw/stern/sternberg_cr_101crNirs.mat"
   # path_file <-  "./data-unshared/raw/wcst/cardSort_cr_101_crNirs.mat" # differnt structure
   model_file <- R.matlab::readMat(path_file)
   input <- model_file[[1]]
+  # input %>% dplyr::glimpse()
   ls_temp <- list()
   (element_names <- rownames(input))
   for(i in seq_along(input) ){
@@ -177,7 +178,7 @@ get_bx_file <- function(path_file){
   return(d) 
 }
 # ds <- get_bx_file("./data-unshared/raw/stern/sternberg_cr_95crNirs.mat")
-# ds <- get_bx_file("./data-unshared/raw/wcst/cardSort_cr_95crNirs.mat")
+# ds <- get_bx_file("./data-unshared/raw/wcst/cardSort_cr_101_crNirs.mat")
 # ds <- get_bx_file("./data-unshared/raw/gng/goNoGo_cr_95crNirs.mat")
 
 # assembles  behavioral data from a given folder
@@ -243,8 +244,8 @@ dto <- list(
   "nirs" = list(),
   "dx"   = list()
 )
-# dto[["nirs"]][["source"]] <- ds_nirs_source
-# dto[["nirs"]][["channel"]] <- ds_nirs_channel
+dto[["nirs"]][["source"]] <- ds_nirs_source
+dto[["nirs"]][["channel"]] <- ds_nirs_channel
 dto[["dx"]][["gng"]]      <- ds_bx_gng
 dto[["dx"]][["stern"]]    <- ds_bx_stern
   
