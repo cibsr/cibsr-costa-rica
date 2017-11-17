@@ -71,15 +71,15 @@ ds
 
 
 # ---- basic-table --------------------------------------------------------------
-
-names(ds)
-ds %>% showfreq("person_id")
-ds %>% showfreq("source")
-ds %>% showfreq("condition")
-ds %>% showfreq("sex")
-ds %>% showfreq("farm_id")
-
-summary(ds$age)
+# 
+# names(ds)
+# ds %>% showfreq("person_id")
+# ds %>% showfreq("source")
+# ds %>% showfreq("condition")
+# ds %>% showfreq("sex")
+# ds %>% showfreq("farm_id")
+# 
+# summary(ds$age)
 
 
 # ---- basic-graph --------------------------------------------------------------

@@ -65,20 +65,23 @@ ds
 
 # ---- basic-table --------------------------------------------------------------
 
-names(ds)
-ds %>% showfreq("person_id")
-ds %>% showfreq("source")
-ds %>% showfreq("condition")
-ds %>% showfreq("sex")
-ds %>% showfreq("farm_id")
-
-summary(ds$age)
+# names(ds)
+# ds %>% showfreq("person_id")
+# ds %>% showfreq("source")
+# ds %>% showfreq("condition")
+# ds %>% showfreq("sex")
+# ds %>% showfreq("farm_id")
+# 
+# summary(ds$age)
 
 
 # ---- basic-graph --------------------------------------------------------------
 
 # individual timeserise with X
 g <- ds %>% 
+  dplyr::mutate(
+    response_time = ifesle(response_time==0,NA,response_time)
+  ) %>% 
   # dplyr::filter(person_id %in% 101:105) %>%
   ggplot(aes(x=timepoint,y=response_time)) +
   geom_line(aes(group=person_id),size=.5, alpha=.5) +
